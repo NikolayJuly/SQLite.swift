@@ -12,7 +12,7 @@ let target: Target = .target(
                  package: "SQLCipher.swift",
                  condition: .when(platforms: applePlatforms, traits: ["SQLCipher"]))
     ],
-    exclude: ["Info.plist"],
+    exclude: ["Info.plist", "SQLite.h"],
     resources: [.copy("PrivacyInfo.xcprivacy")],
     cSettings: [
         .define("SQLITE_HAS_CODEC", .when(platforms: applePlatforms, traits: ["SQLCipher"]))
@@ -36,10 +36,10 @@ defaultTraits = ["SystemSQLite"]
 let package = Package(
     name: "SQLite.swift",
     platforms: [
-        .iOS(.v12),
-        .macOS(.v10_13),
-        .watchOS(.v4),
-        .tvOS(.v12),
+        .iOS(.v16),
+        .macOS(.v13),
+        .watchOS(.v9),
+        .tvOS(.v16),
         .visionOS(.v1)
     ],
     products: [

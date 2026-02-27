@@ -22,7 +22,11 @@
 // THE SOFTWARE.
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 extension QueryType {
     /// Creates an `INSERT` statement by encoding the given object

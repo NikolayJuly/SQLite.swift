@@ -1,4 +1,8 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 /// See https://www.sqlite.org/uri.html
 public enum URIQueryParameter: CustomStringConvertible {
