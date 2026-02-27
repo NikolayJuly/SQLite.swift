@@ -53,25 +53,19 @@ extension Date: Value {
     }
 
     public static func fromDatatypeValue(_ stringValue: String) -> Date {
-        dateFormatter.date(from: stringValue)!
+        try! dateFormatter.parse(stringValue)
     }
 
     public var datatypeValue: String {
-        dateFormatter.string(from: self)
+        dateFormatter.format(self)
     }
 
 }
 
-/// A global date formatter used to serialize and deserialize `NSDate` objects.
+/// A global date formatter used to serialize and deserialize `Date` objects.
 /// If multiple date formats are used in an application’s database(s), use a
 /// custom `Value` type per additional format.
-public var dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-    return formatter
-}()
+public var dateFormatter: Date.ISO8601FormatStyle = .init(includingFractionalSeconds: true)
 
 extension UUID: Value {
 

@@ -94,8 +94,7 @@ public struct ColumnDefinition: Equatable {
         let autoIncrement: Bool
         let onConflict: OnConflict?
 
-        // swiftlint:disable:next force_try
-        static let pattern = try! NSRegularExpression(pattern: "PRIMARY KEY\\s*(?:ASC|DESC)?\\s*(?:ON CONFLICT (\\w+)?)?\\s*(AUTOINCREMENT)?")
+        private static let pattern = #/PRIMARY KEY\s*(?:ASC|DESC)?\s*(?:ON CONFLICT (\w+)?)?\s*(AUTOINCREMENT)?/#
 
         public init(autoIncrement: Bool = true, onConflict: OnConflict? = nil) {
             self.autoIncrement = autoIncrement
@@ -103,19 +102,11 @@ public struct ColumnDefinition: Equatable {
         }
 
         init?(sql: String) {
-            guard let match = PrimaryKey.pattern.firstMatch(
-                in: sql,
-                range: NSRange(location: 0, length: sql.count)) else {
+            guard let match = sql.firstMatch(of: PrimaryKey.pattern) else {
                 return nil
             }
-            let conflict = match.range(at: 1)
-            let onConflict: ColumnDefinition.OnConflict?
-            if conflict.location != NSNotFound {
-                onConflict = OnConflict((sql as NSString).substring(with: conflict))
-            } else {
-                onConflict = nil
-            }
-            let autoIncrement = match.range(at: 2).location != NSNotFound
+            let onConflict = match.1.flatMap { OnConflict(String($0)) }
+            let autoIncrement = match.2 != nil
             self.init(autoIncrement: autoIncrement, onConflict: onConflict)
         }
     }
@@ -172,11 +163,9 @@ public struct ColumnDefinition: Equatable {
 }
 
 public enum LiteralValue: Equatable, CustomStringConvertible {
-    // swiftlint:disable force_try
-    private static let singleQuote = try! NSRegularExpression(pattern: "^'(.*)'$")
-    private static let doubleQuote = try! NSRegularExpression(pattern: "^\"(.*)\"$")
-    private static let blob        = try! NSRegularExpression(pattern: "^[xX]\'(.*)\'$")
-    // swiftlint:enable force_try
+    private static let singleQuote = #/^'(.*)'$/#
+    private static let doubleQuote = #/^"(.*)"$/#
+    private static let blob        = #/^[xX]'(.*)'$/#
 
     case numericLiteral(String)
     case stringLiteral(String)
@@ -239,12 +228,12 @@ public enum LiteralValue: Equatable, CustomStringConvertible {
         }
     }
     private static func parse(_ string: String) -> LiteralValue {
-        if let match = LiteralValue.singleQuote.firstMatch(in: string, range: NSRange(location: 0, length: string.count)) {
-            return .stringLiteral((string as NSString).substring(with: match.range(at: 1)).replacingOccurrences(of: "''", with: "'"))
-        } else if let match = LiteralValue.doubleQuote.firstMatch(in: string, range: NSRange(location: 0, length: string.count)) {
-            return .stringLiteral((string as NSString).substring(with: match.range(at: 1)).replacingOccurrences(of: "\"\"", with: "\""))
-        } else if let match = LiteralValue.blob.firstMatch(in: string, range: NSRange(location: 0, length: string.count)) {
-            return .blobLiteral((string as NSString).substring(with: match.range(at: 1)))
+        if let match = string.firstMatch(of: singleQuote) {
+            return .stringLiteral(String(match.1).replacingOccurrences(of: "''", with: "'"))
+        } else if let match = string.firstMatch(of: doubleQuote) {
+            return .stringLiteral(String(match.1).replacingOccurrences(of: "\"\"", with: "\""))
+        } else if let match = string.firstMatch(of: blob) {
+            return .blobLiteral(String(match.1))
         } else {
             return .numericLiteral(string)
         }
@@ -257,10 +246,8 @@ public struct IndexDefinition: Equatable {
     // SQLite supports index names up to 64 characters.
     static let maxIndexLength = 64
 
-    // swiftlint:disable force_try
-    static let whereRe = try! NSRegularExpression(pattern: "\\sWHERE\\s+(.+)$")
-    static let orderRe = try! NSRegularExpression(pattern: "\"?(\\w+)\"? DESC")
-    // swiftlint:enable force_try
+    static let whereRe = #/\sWHERE\s+(.+)$/#
+    static let orderRe = #/"?(\w+)"? DESC/#
 
     public enum Order: String { case ASC, DESC }
 
@@ -277,23 +264,17 @@ public struct IndexDefinition: Equatable {
 
     init (table: String, name: String, unique: Bool, columns: [String], indexSQL: String?, origin: Origin? = nil) {
         func wherePart(sql: String) -> String? {
-            IndexDefinition.whereRe.firstMatch(in: sql, options: [], range: NSRange(location: 0, length: sql.count)).map {
-                (sql as NSString).substring(with: $0.range(at: 1))
-            }
+            sql.firstMatch(of: IndexDefinition.whereRe).map { String($0.1) }
         }
 
         func orders(sql: String) -> [String: IndexDefinition.Order] {
-            IndexDefinition.orderRe
-                .matches(in: sql, range: NSRange(location: 0, length: sql.count))
-                .reduce([String: IndexDefinition.Order]()) { (memo, result) in
-                        var memo2 = memo
-                        let column = (sql as NSString).substring(with: result.range(at: 1))
-                        memo2[column] = .DESC
-                        return memo2
-            }
+            sql.matches(of: IndexDefinition.orderRe)
+                .reduce(into: [String: IndexDefinition.Order]()) { memo, match in
+                    memo[String(match.1)] = .DESC
+                }
         }
 
-        let orders = indexSQL.flatMap(orders)
+        let orders = indexSQL.map(orders)
 
         self.init(table: table,
                   name: name,

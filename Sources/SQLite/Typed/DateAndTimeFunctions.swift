@@ -22,7 +22,11 @@
 // THE SOFTWARE.
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 /// All five date and time functions take a time string as an argument.
 /// The time string is followed by zero or more modifiers.
@@ -71,19 +75,19 @@ public final class DateFunctions: Sendable {
 
 extension Date {
     public var date: Expression<Date?> {
-        DateFunctions.date(dateFormatter.string(from: self))
+        DateFunctions.date(dateFormatter.format(self))
     }
 
     public var time: Expression<Date?> {
-        DateFunctions.time(dateFormatter.string(from: self))
+        DateFunctions.time(dateFormatter.format(self))
     }
 
     public var datetime: Expression<Date?> {
-        DateFunctions.datetime(dateFormatter.string(from: self))
+        DateFunctions.datetime(dateFormatter.format(self))
     }
 
     public var julianday: Expression<Date?> {
-        DateFunctions.julianday(dateFormatter.string(from: self))
+        DateFunctions.julianday(dateFormatter.format(self))
     }
 }
 
