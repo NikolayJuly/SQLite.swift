@@ -326,7 +326,7 @@ extension IndexDefinition {
             if to.starts(with: SchemaChanger.tempPrefix) {
                 return "\(SchemaChanger.tempPrefix)\(name)"
             } else if table.starts(with: SchemaChanger.tempPrefix) {
-                return name.replacingOccurrences(of: SchemaChanger.tempPrefix, with: "")
+                return name.replacing(SchemaChanger.tempPrefix, with: "")
             } else {
                 return name
             }

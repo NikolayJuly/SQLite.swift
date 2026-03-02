@@ -63,13 +63,13 @@ public struct ColumnDefinition: Equatable {
         init(_ string: String) {
             let test = string.uppercased()
             // https://sqlite.org/datatype3.html#determination_of_column_affinity
-            if test.contains("INT") { // Rule 1
+            if test.contains(#/INT/#) { // Rule 1
                 self = .INTEGER
-            } else if ["CHAR", "CLOB", "TEXT"].first(where: {test.contains($0)}) != nil { // Rule 2
+            } else if test.contains(#/CHAR|CLOB|TEXT/#) { // Rule 2
                 self = .TEXT
-            } else if string.contains("BLOB") { // Rule 3
+            } else if test.contains(#/BLOB/#) { // Rule 3
                 self = .BLOB
-            } else if ["REAL", "FLOA", "DOUB"].first(where: {test.contains($0)}) != nil { // Rule 4
+            } else if test.contains(#/REAL|FLOA|DOUB/#) { // Rule 4
                 self = .REAL
             } else { // Rule 5
                 self = .NUMERIC
@@ -229,9 +229,9 @@ public enum LiteralValue: Equatable, CustomStringConvertible {
     }
     private static func parse(_ string: String) -> LiteralValue {
         if let match = string.firstMatch(of: singleQuote) {
-            return .stringLiteral(String(match.1).replacingOccurrences(of: "''", with: "'"))
+            return .stringLiteral(String(match.1).replacing("''", with: "'"))
         } else if let match = string.firstMatch(of: doubleQuote) {
-            return .stringLiteral(String(match.1).replacingOccurrences(of: "\"\"", with: "\""))
+            return .stringLiteral(String(match.1).replacing("\"\"", with: "\""))
         } else if let match = string.firstMatch(of: blob) {
             return .blobLiteral(String(match.1))
         } else {

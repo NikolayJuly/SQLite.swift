@@ -759,7 +759,7 @@ extension Context {
         case let int as Int64:
             sqlite3_result_int64(self, int)
         case let string as String:
-            sqlite3_result_text(self, string, Int32(string.lengthOfBytes(using: .utf8)), SQLITE_TRANSIENT)
+            sqlite3_result_text(self, string, Int32(string.utf8.count), SQLITE_TRANSIENT)
         case .none:
             sqlite3_result_null(self)
         default:
